@@ -4,7 +4,9 @@
 #include "Direction.h"
 #include "CellType.h"
 
-
+///CELL TYPE := EMPTY/RED CAR/ OTHER CARS/TRUCKS
+///Direction := THE DIRECTION OF THE CAR IS CURRENTLY ON THE CELL -- HORIZONTAL/VERTICAL --
+///CAR'S LENGTH THAT IS ON THE CURRENT CELL
 template<CellType CT, Direction Dir, int Len>
 struct BoardCell {
     constexpr static CellType type = CT;

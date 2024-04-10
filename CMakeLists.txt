@@ -22,4 +22,8 @@ add_executable(OOPHW5
         part1/Observer.h
         part1/Subject.h
         part2/List.h
-        part2/Utilities.h)
+        part2/Utilities.h
+        part2/Direction.h
+        part2/BoardCell.h
+        part2/CellType.h
+        part2/GameBoard.h)

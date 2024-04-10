@@ -4,7 +4,9 @@
 #include "List.h"
 #include "BoardCell.h"
 
-
+///BOARD := THE MAIN LIST OF THE BOARD
+///WIDTH := COLUMNS NUMBER
+///LENGTH := ROWS NUMBER
 template<typename List>
 struct GameBoard {
     typedef List board;

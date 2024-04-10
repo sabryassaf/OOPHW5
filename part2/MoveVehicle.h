@@ -5,8 +5,32 @@
 #include "Direction.h"
 #include "GameBoard.h"
 #include "Utilities.h"
+
 #include <iostream>
 #include "Printer.h"
+
+template<CellType Type, Direction Dir, int A>
+struct Move {
+    static_assert(Type != EMPTY,"Error,empty cell MoveVehicle");
+
+    constexpr static CellType type = Type;
+    constexpr static Direction direction  = Dir;
+    constexpr static int amount = A;
+};
+
+
+template<typename T, CellType Type, int N>
+struct FindInList {};
+
+template<typename... TT, CellType LT, CellType TYPE, Direction DIR, int LEN, int N>
+struct FindInList<List<BoardCell<TYPE,DIR,LEN>, TT...>, LT, N> {
+   // static_assert(LT != EMPTY, "can't find Empty!");
+
+   constexpr static int prevIdx = ConditionalInteger<FindInList<List<BoardCell<TYPE,DIR, LEN>>>>
+};
+
+
+
 
 
 using namespace std;
@@ -21,14 +45,21 @@ using namespace std;
 template <CellType type, CellType type2, int row, int col, bool done, typename B>
 struct Find_Car_Helper{
     typedef typename GameBoard<B>::board mainList;
-    static constexpr bool last_row = (mainList::size == row + 1);
+    static constexpr bool last_row = ConditionalInteger<(Find_Car_Helper<>>>, type2, ;
 
-    static constexpr bool found = /*/ COMPLETE /*/;
+
+    constexpr static int previous_row = ConditionalInteger<(FindVehicle<GameBoard<List<List<BoardCell<type2, Dir, Length>,UU...>, TT...>>, LType, N-1>::row != -1),
+            FindVehicle<GameBoard<List<List<BoardCell<Type, Dir, Length>,UU...>, TT...>>, LType, N-1>::row, -1>::value;
+
+
+
+    static constexpr bool found = (type != EMPTY);
     static constexpr bool last_cell_in_board = /*/ COMPLETE /*/;
 
     static_assert(!(!found && last_cell_in_board), "Type was not found!");
 
-    static constexpr int next_row = /*/ COMPLETE using ConditionalInteger /*/; // this is the next cell's row
+    static constexpr int next_row = ConditionalInteger<>
+            /*/ COMPLETE using ConditionalInteger /*/; // this is the next cell's row
     static constexpr int next_col = /*/ COMPLETE using ConditionalInteger /*/; // this is the next cell's column
 
     typedef typename /*/ COMPLETE using GetAtIndex /*/ next_row_list;
@@ -106,6 +137,20 @@ template<typename myL,typename my_cell,int Co,int Ro>
 struct direct<RIGHT,0,myL,my_cell,Co, Ro> {
     /*/COMPLETE/*/;
 };
+
+/*
+///GetTypeFromPosition := GETS THE TYPE OF A CERTAIN POSITION IN THE MATRIX
+template<int N, typename T>
+struct GetTypeValueAtIndex {
+    constexpr static CellType value = EMPTY;
+};
+
+template<int N, typename T, typename... TT>
+struct GetTypeValueAtIndex<N, List<T, TT...>> {
+    constexpr static CellType value = Get//////////////////////////
+};*/
+
+
 
 // MoveVehicle Class Declaration
 template<typename gameBoard, int R, int C, Direction D, int A>

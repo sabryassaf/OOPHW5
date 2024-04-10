@@ -1,6 +1,8 @@
 #ifndef OOPHW5_CELLTYPE_H
 #define OOPHW5_CELLTYPE_H
 
+//#include "Direction.h"
+
 enum CellType {
     EMPTY = 0,
     ///RED CAR
@@ -10,5 +12,7 @@ enum CellType {
     ///TRUCKS:
     O = 13, P = 14, Q = 15, R = 16
 };
+
+
 
 #endif //OOPHW5_CELLTYPE_H

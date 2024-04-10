@@ -2,6 +2,8 @@
 #define OOPHW5_LIST_H
 
 ///LIST INITIALIZATION
+
+
 template<typename... TT>
 struct List {
     constexpr static int size = 0;
