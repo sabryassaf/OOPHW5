@@ -19,17 +19,17 @@ struct Move {
 };
 
 
-template<typename T, CellType Type, int N>
-struct FindInList {};
-
-template<typename... TT, CellType LT, CellType TYPE, Direction DIR, int LEN, int N>
-struct FindInList<List<BoardCell<TYPE,DIR,LEN>, TT...>, LT, N> {
-   // static_assert(LT != EMPTY, "can't find Empty!");
-
-   constexpr static int prevIdx = ConditionalInteger<FindInList<List<BoardCell<TYPE,DIR, LEN>>>>
-};
-
-
+//template<typename T, CellType Type, int N>
+//struct FindInList {};
+//
+//template<typename... TT, CellType LT, CellType TYPE, Direction DIR, int LEN, int N>
+//struct FindInList<List<BoardCell<TYPE,DIR,LEN>, TT...>, LT, N> {
+//   // static_assert(LT != EMPTY, "can't find Empty!");
+//
+//   constexpr static int prevIdx = ConditionalInteger<FindInList<List<BoardCell<TYPE,DIR, LEN>>>>
+//};
+//
+//
 
 
 
@@ -45,35 +45,31 @@ using namespace std;
 template <CellType type, CellType type2, int row, int col, bool done, typename B>
 struct Find_Car_Helper{
     typedef typename GameBoard<B>::board mainList;
-    static constexpr bool last_row = ConditionalInteger<(Find_Car_Helper<>>>, type2, ;
+    static constexpr bool last_row = (row == mainList::size - 1);
 
-
-    constexpr static int previous_row = ConditionalInteger<(FindVehicle<GameBoard<List<List<BoardCell<type2, Dir, Length>,UU...>, TT...>>, LType, N-1>::row != -1),
-            FindVehicle<GameBoard<List<List<BoardCell<Type, Dir, Length>,UU...>, TT...>>, LType, N-1>::row, -1>::value;
-
-
-
-    static constexpr bool found = (type != EMPTY);
-    static constexpr bool last_cell_in_board = /*/ COMPLETE /*/;
+    static constexpr bool found = (type == type2);
+    static constexpr bool last_cell_in_board = (last_row && (col == mainList::head::size - 1));
 
     static_assert(!(!found && last_cell_in_board), "Type was not found!");
 
-    static constexpr int next_row = ConditionalInteger<>
-            /*/ COMPLETE using ConditionalInteger /*/; // this is the next cell's row
-    static constexpr int next_col = /*/ COMPLETE using ConditionalInteger /*/; // this is the next cell's column
+    static constexpr int next_row = ConditionalInteger<last_row, 0, row + 1>::value;
 
-    typedef typename /*/ COMPLETE using GetAtIndex /*/ next_row_list;
-    typedef typename /*/ COMPLETE using GetAtIndex /*/ next_cell;
-    typedef /*/ COMPLETE using Find_Car_Helper (recursive call) /*/ next_helper;
+    static constexpr int next_col = ConditionalInteger<(col == mainList::head::size - 1) , 0, col + 1>::value;
+
+
+    typedef typename GetAtIndex<next_row,mainList>::value current_row;
+    typedef typename GetAtIndex<next_col,current_row>::value current_cell;
+    typedef Find_Car_Helper<type, current_cell::type, next_row, next_col, found, B> next_helper;
 
     static constexpr int X_row = ConditionalInteger<found, row, next_helper::X_row >::value;
     static constexpr int X_col = ConditionalInteger<found, col, next_helper::X_col >::value;
 };
 
 // Find_Car_Helper Specialization - stopping condition
-template </*/COMPLETE/*/>
-struct Find_Car_Helper</*/COMPLETE/*/>{
-    /*/COMPLETE/*/
+template <CellType type, int row, int col, typename B>
+struct Find_Car_Helper<type, type, row, col, true, B>{
+    static constexpr int X_row = row;
+    static constexpr int X_col = col;
 };
 
 // FindCar Class Declaration
@@ -84,7 +80,8 @@ struct FindCar{
     typedef typename game_board::board mainList;
     static constexpr int last_col_idx = mainList::head::size - 1;
 
-    typedef typename /*/COMPLETE/*/ first_cell;
+    typedef typename mainList::head first_cell;
+//    typedef typename /*/COMPLETE/*/ first_cell;
 
     typedef Find_Car_Helper<type,first_cell::type,0,last_col_idx,false,mainList> car_loc;
     static constexpr int X_row_idx = car_loc::X_row;
@@ -103,9 +100,28 @@ struct Dir{};
 // Dir Specialization (you need to implement more specializations similarly)
 template< int Ro,int Col,int len>
 struct Dir<RIGHT,Ro,Col,len> {
-    static constexpr int row_i=/*/COMPLETE/*/;
-    static constexpr int col_i=/*/COMPLETE/*/;
+    static constexpr int row_i = Ro;
+    static constexpr int col_i= Col - len + 1;
 };
+
+template< int Ro,int Col,int len>
+struct Dir<LEFT,Ro,Col,len> {
+    static constexpr int row_i = Ro;
+    static constexpr int col_i= Col + len - 1;
+};
+
+template< int Ro,int Col,int len>
+struct Dir<UP,Ro,Col,len> {
+    static constexpr int row_i = Ro + len - 1;
+    static constexpr int col_i= Col;
+};
+
+template< int Ro,int Col,int len>
+struct Dir<DOWN,Ro,Col,len> {
+    static constexpr int row_i = Ro - len + 1;
+    static constexpr int col_i= Col;
+};
+
 
 
 // direct Class Declaration
@@ -121,8 +137,10 @@ struct direct{};
 // direct Specialization (you need to implement more specializations similarly)
 template<int counter,typename myL,typename my_cell,int Co,int Ro>
 struct direct<RIGHT,counter,myL,my_cell,Co, Ro>{
-    typedef typename /*/ COMPLETE using direct (recursive call) /*/ mainList; // main list of the board after we moved the car "count"-1 steps
+    /*/ COMPLETE using direct (recursive call) /*/
+    typedef typename direct<RIGHT,counter-1,myL,my_cell,Co,Ro>::moved mainList;
     typedef GetAtIndex<Ro,mainList> subList ;
+
     typedef typename /*/COMPLETE/*/ celli;  // this is the closer end (respect to "d") after the #"count" step
     typedef typename /*/COMPLETE/*/ to_celli; // this is the further end (respect to "d") before the #"count" step (after the #("count"-1) step)
     static_assert(/*/COMPLETE/*/, "Error,Collision cell MoveVehicle");
@@ -137,19 +155,6 @@ template<typename myL,typename my_cell,int Co,int Ro>
 struct direct<RIGHT,0,myL,my_cell,Co, Ro> {
     /*/COMPLETE/*/;
 };
-
-/*
-///GetTypeFromPosition := GETS THE TYPE OF A CERTAIN POSITION IN THE MATRIX
-template<int N, typename T>
-struct GetTypeValueAtIndex {
-    constexpr static CellType value = EMPTY;
-};
-
-template<int N, typename T, typename... TT>
-struct GetTypeValueAtIndex<N, List<T, TT...>> {
-    constexpr static CellType value = Get//////////////////////////
-};*/
-
 
 
 // MoveVehicle Class Declaration
@@ -166,10 +171,13 @@ struct MoveVehicle<GameBoard<B>,R1,C1,Dl,A>{
     typedef GetAtIndex<C1,typename subList::value> cell;
     typedef typename cell::value my_cell;
 
-    static_assert(/*/COMPLETE/*/, "Error Row,Move");
-    static_assert(/*/COMPLETE/*/, "Error column,Move");
-    static_assert(/*/COMPLETE/*/, "Error,empty cell MoveVehicle");
-    static_assert(/*/COMPLETE/*/, "Error,direction cell MoveVehicle");
+    static_assert(R1 >=0 && R1 < mainList::length , "Error Row,Move");
+    static_assert(C1>=0 && C1 < mainList::width, "Error column,Move");
+    static_assert(my_cell::type != EMPTY, "Error,empty cell MoveVehicle");
+    constexpr static Direction carDl = my_cell::direction;
+    static_assert(((Dl == UP || Dl == DOWN) && (carDl == UP || carDl == DOWN)) ||
+                        (((Dl == RIGHT) || (Dl == LEFT)) && ((carDl == RIGHT) || (carDl == LEFT))),
+                            "Error,direction cell MoveVehicle");
 
     static constexpr int R2= FindCar<my_cell::type,PrevBoard>::X_row_idx;
     static constexpr int C2= FindCar<my_cell::type,PrevBoard>::X_col_idx;
