@@ -26,4 +26,5 @@ add_executable(OOPHW5
         part2/Direction.h
         part2/BoardCell.h
         part2/CellType.h
-        part2/GameBoard.h)
+        part2/GameBoard.h
+        part2/RushHour.h)

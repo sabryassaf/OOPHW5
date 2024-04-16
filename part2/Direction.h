@@ -1,7 +1,6 @@
 #ifndef OOPHW5_DIRECTION_H
 #define OOPHW5_DIRECTION_H
 
-#include "GameBoard.h"
 #include "List.h"
 #include "Utilities.h"
 

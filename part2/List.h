@@ -25,10 +25,10 @@ struct List<T,TT...> {
 ///PREPEND LIST
 /// LT := LIST TYPE
 template<typename LT,typename T>
-struct prependList{};
+struct PrependList{};
 
 template<typename LT,typename... T>
-struct prependList<LT, List<T...>> {
+struct PrependList<LT, List<T...>> {
     typedef List<LT, T...> list;
 };
 
@@ -61,7 +61,7 @@ struct SetAtIndex<0, U, List<T,TT...>> {
 
 template<int N,typename U,typename T, typename... TT>
 struct SetAtIndex<N, U, List<T, TT...>> {
-    typedef typename prependList<T, typename SetAtIndex<N-1, U, List<TT...>>::list>::list list;
+    typedef typename PrependList<T, typename SetAtIndex<N-1, U, List<TT...>>::list>::list list;
 };
 
 #endif //OOPHW5_LIST_H

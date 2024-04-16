@@ -5,189 +5,198 @@
 #include "Direction.h"
 #include "GameBoard.h"
 #include "Utilities.h"
+#include "TransposeList.h"
 
 #include <iostream>
 #include "Printer.h"
 
+using namespace std;
+
 template<CellType Type, Direction Dir, int A>
 struct Move {
-    static_assert(Type != EMPTY,"Error,empty cell MoveVehicle");
+    static_assert(Type != EMPTY, "Cannot move empty cell");
 
     constexpr static CellType type = Type;
     constexpr static Direction direction  = Dir;
     constexpr static int amount = A;
 };
 
+template <typename , int, int, Direction, int>
+struct MoveVehicle;
 
-//template<typename T, CellType Type, int N>
-//struct FindInList {};
-//
-//template<typename... TT, CellType LT, CellType TYPE, Direction DIR, int LEN, int N>
-//struct FindInList<List<BoardCell<TYPE,DIR,LEN>, TT...>, LT, N> {
-//   // static_assert(LT != EMPTY, "can't find Empty!");
-//
-//   constexpr static int prevIdx = ConditionalInteger<FindInList<List<BoardCell<TYPE,DIR, LEN>>>>
-//};
-//
-//
+template <typename BOARD, int R, int C, Direction D, CellType, bool>
+struct MoveVehicleOneStep;
 
+// MoveVehicle horizontally - recursive case
+template <typename gameBoard, int R, int C ,int A>
+struct MoveVehicle <gameBoard, R, C, Direction::RIGHT, A>  {
+    // boundaries check
+    static_assert(gameBoard::length - 1 >= R, "Bad row");
+    static_assert(gameBoard::width - 1 >= C, "Bad column");
+    // get the cell to move and check if it's not empty
+    typedef typename GetAtIndex<C, typename GetAtIndex<R,typename gameBoard::board>::value>::value cell;
+    static_assert(cell::type != EMPTY, "Cannot move empty cell");
 
-
-using namespace std;
-
-// Find_Car_Helper Class Declaration
-// This class recursively iterates over the board's cells and finds the coordinates of a cell containing an end (the front or back) of the car "type" (note that the first end to be found depends on the direction of the search).
-// type - the car to find
-// type2 - the car on the current cell
-// (row, col) - the coordinates of the current cell
-// done - search is done
-// B - main list of the board
-template <CellType type, CellType type2, int row, int col, bool done, typename B>
-struct Find_Car_Helper{
-    typedef typename GameBoard<B>::board mainList;
-    static constexpr bool last_row = (row == mainList::size - 1);
-
-    static constexpr bool found = (type == type2);
-    static constexpr bool last_cell_in_board = (last_row && (col == mainList::head::size - 1));
-
-    static_assert(!(!found && last_cell_in_board), "Type was not found!");
-
-    static constexpr int next_row = ConditionalInteger<last_row, 0, row + 1>::value;
-
-    static constexpr int next_col = ConditionalInteger<(col == mainList::head::size - 1) , 0, col + 1>::value;
-
-
-    typedef typename GetAtIndex<next_row,mainList>::value current_row;
-    typedef typename GetAtIndex<next_col,current_row>::value current_cell;
-    typedef Find_Car_Helper<type, current_cell::type, next_row, next_col, found, B> next_helper;
-
-    static constexpr int X_row = ConditionalInteger<found, row, next_helper::X_row >::value;
-    static constexpr int X_col = ConditionalInteger<found, col, next_helper::X_col >::value;
+    // recursive call
+    typedef GameBoard<typename MoveVehicleOneStep<typename MoveVehicle <gameBoard, R, C, Direction::RIGHT, A-1>::board::board, R, C+A-1, Direction::RIGHT, cell::type, false>::board> board;
 };
 
-// Find_Car_Helper Specialization - stopping condition
-template <CellType type, int row, int col, typename B>
-struct Find_Car_Helper<type, type, row, col, true, B>{
-    static constexpr int X_row = row;
-    static constexpr int X_col = col;
+template <typename gameBoard, int R, int C ,int A>
+struct MoveVehicle <gameBoard, R, C, Direction::LEFT, A>  {
+    // boundaries check
+    static_assert(gameBoard::length - 1 >= R, "Bad row");
+    static_assert(gameBoard::width - 1 >= C, "Bad column");
+    // get the cell to move and check if it's not empty
+    typedef typename GetAtIndex<C, typename GetAtIndex<R,typename gameBoard::board>::value>::value cell;
+    static_assert(cell::type != EMPTY, "Cannot move empty cell");
+
+    // recursive call
+    typedef GameBoard<typename MoveVehicleOneStep<typename MoveVehicle <gameBoard, R, C, Direction::LEFT,
+            A-1>::board::board, R, C-A+1, Direction::LEFT, cell::type, false>::board> board;
 };
 
-// FindCar Class Declaration
-// (uses Find_Car_Helper to find car "type" in board "Bo" - read Find_Car_Helper for more info)
-template<CellType type, typename Bo>
-struct FindCar{
-    typedef Bo game_board;
-    typedef typename game_board::board mainList;
-    static constexpr int last_col_idx = mainList::head::size - 1;
+// MoveVehicle horizontally - base cases
+template <typename gameBoard, int R, int C>
+struct MoveVehicle <gameBoard, R, C, Direction::RIGHT, 1>  {
+    // boundaries check
+    static_assert(gameBoard::length - 1 >= R, "Bad row");
+    static_assert(gameBoard::width - 1 >= C, "Bad column");
+    // get the cell to move and check if it's not empty
+    typedef typename GetAtIndex<C, typename GetAtIndex<R,typename gameBoard::board>::value>::value cell;
+    static_assert(cell::type != EMPTY, "Cannot move empty cell");
 
-    typedef typename mainList::head first_cell;
-//    typedef typename /*/COMPLETE/*/ first_cell;
-
-    typedef Find_Car_Helper<type,first_cell::type,0,last_col_idx,false,mainList> car_loc;
-    static constexpr int X_row_idx = car_loc::X_row;
-    static constexpr int X_col_idx = car_loc::X_col;
+    typedef GameBoard<typename MoveVehicleOneStep<typename gameBoard::board, R, C, Direction::RIGHT, cell::type,
+        false>::board> board;
 };
 
-// Dir Class Declaration
-// This class computes the further end of a car respect to "c" given the end found using FindCar.
-// (e.g. if "c"=RIGHT, the further end of the car is the left end...)
-// c - a direction
-// (Ro, Col) - a random end of the car
-// len - the car's length
-template<Direction c,int Ro,int Col,int len>
-struct Dir{};
+template <typename gameBoard, int R, int C>
+struct MoveVehicle <gameBoard, R, C, Direction::LEFT, 1>  {
+    // boundaries check
+    static_assert(gameBoard::length - 1 >= R, "Bad row");
+    static_assert(gameBoard::width - 1 >= C, "Bad column");
+    // get the cell to move and check if it's not empty
+    typedef typename GetAtIndex<C, typename GetAtIndex<R,typename gameBoard::board>::value>::value cell;
+    static_assert(cell::type != EMPTY, "Cannot move empty cell");
 
-// Dir Specialization (you need to implement more specializations similarly)
-template< int Ro,int Col,int len>
-struct Dir<RIGHT,Ro,Col,len> {
-    static constexpr int row_i = Ro;
-    static constexpr int col_i= Col - len + 1;
+    typedef GameBoard<typename MoveVehicleOneStep<typename gameBoard::board, R, C, Direction::LEFT, cell::type,
+            false>::board> board;
 };
 
-template< int Ro,int Col,int len>
-struct Dir<LEFT,Ro,Col,len> {
-    static constexpr int row_i = Ro;
-    static constexpr int col_i= Col + len - 1;
-};
+// MoveCar vertically - recursive case
+// In this case, we can utilize RIGHT and LEFT calls when handling DOWN and UP calls respectively
+template <typename gameBoard, int R, int C ,int A>
+struct MoveVehicle <gameBoard, R, C, Direction::UP, A>  {
+    // boundaries check
+    static_assert(gameBoard::length - 1 >= R, "Bad row");
+    static_assert(gameBoard::width - 1 >= C, "Bad column");
+    // get the cell to move and check if it's not empty
+    typedef typename GetAtIndex<C, typename GetAtIndex<R,typename gameBoard::board>::value>::value cell;
+    static_assert(cell::type != EMPTY, "Cannot move empty cell");
+    // check if the car in cell is vertical
+    static_assert(cell::direction == UP || cell::direction == DOWN, "Bad movement direction");
 
-template< int Ro,int Col,int len>
-struct Dir<UP,Ro,Col,len> {
-    static constexpr int row_i = Ro + len - 1;
-    static constexpr int col_i= Col;
-};
-
-template< int Ro,int Col,int len>
-struct Dir<DOWN,Ro,Col,len> {
-    static constexpr int row_i = Ro - len + 1;
-    static constexpr int col_i= Col;
+    typedef GameBoard<typename Transpose<typename MoveVehicle<GameBoard<typename Transpose<typename gameBoard::board>::matrix>, C, R, LEFT, A>::board::board>::matrix> board;
 };
 
 
+template <typename gameBoard, int R, int C ,int A>
+struct MoveVehicle <gameBoard, R, C, Direction::DOWN, A>  {
+    // boundaries check
+    static_assert(gameBoard::length - 1 >= R, "Bad row");
+    static_assert(gameBoard::width - 1 >= C, "Bad column");
+    // get the cell to move and check if it's not empty
+    typedef typename GetAtIndex<C, typename GetAtIndex<R,typename gameBoard::board>::value>::value cell;
+    static_assert(cell::type != EMPTY, "Cannot move empty cell");
+    // check if the car in cell is vertical
+    static_assert(cell::direction == UP || cell::direction == DOWN, "Bad movement direction");
 
-// direct Class Declaration
-// This class recursively moves a car "Am" steps on the board in a certain direction
-// d - the direction of the movement
-// counter - recursive counter (remaining amount of steps)
-// myL - main list of the board
-// my_cell - a cell on the current board containing the car to be moved
-// (Ro, Co) - coordinates of the further end of the car respect to "d" (e.g. if "d"=RIGHT, the further end of the car is the left end...)
-template<Direction d,int counter,typename myL,typename my_cell,int Co,int Ro>
-struct direct{};
-
-// direct Specialization (you need to implement more specializations similarly)
-template<int counter,typename myL,typename my_cell,int Co,int Ro>
-struct direct<RIGHT,counter,myL,my_cell,Co, Ro>{
-    /*/ COMPLETE using direct (recursive call) /*/
-    typedef typename direct<RIGHT,counter-1,myL,my_cell,Co,Ro>::moved mainList;
-    typedef GetAtIndex<Ro,mainList> subList ;
-
-    typedef typename /*/COMPLETE/*/ celli;  // this is the closer end (respect to "d") after the #"count" step
-    typedef typename /*/COMPLETE/*/ to_celli; // this is the further end (respect to "d") before the #"count" step (after the #("count"-1) step)
-    static_assert(/*/COMPLETE/*/, "Error,Collision cell MoveVehicle");
-    typedef typename /*/COMPLETE/*/ first;
-    typedef typename /*/COMPLETE (use first)/*/ second;
-    typedef typename SetAtIndex<Ro,second,mainList>::list LL;
-    typedef LL moved;
+    typedef GameBoard<typename Transpose<typename MoveVehicle<GameBoard<typename Transpose<typename gameBoard::board>::matrix>, C, R, RIGHT, A>::board::board>::matrix> board;
 };
 
-// direct Specialization (you need to implement more specializations similarly)
-template<typename myL,typename my_cell,int Co,int Ro>
-struct direct<RIGHT,0,myL,my_cell,Co, Ro> {
-    /*/COMPLETE/*/;
+// Since we handle horizontal movement directly, and transpose vertical movement into horizontal,
+// we only need to implement OneStep for horizontal movement.
+// --
+// MoveVehicleOneStep horizontally - recursive case
+template <typename gameBoard, int R, int C, CellType Type, bool B>
+struct MoveVehicleOneStep <gameBoard, R, C, Direction::RIGHT, Type, B>  {
+    typedef typename GetAtIndex<R, gameBoard>::value currentRow;
+    typedef typename GetAtIndex<C, currentRow>::value currentCell;
+    typedef typename GetAtIndex<C-1, currentRow>::value closeCell;
+
+    static constexpr int vehicleLength = currentCell::length;
+    static constexpr int index = ConditionalInteger<closeCell::type != currentCell::type,
+            vehicleLength + C,
+            C
+    >::value;
+    static_assert(index <= gameBoard::head::size - 1, "exiting bounds");
+    typedef typename GetAtIndex<index, currentRow>::value objToReplace;
+    static_assert(!(currentCell::type == Type && closeCell::type != currentCell::type && objToReplace::type != EMPTY), "movement blocked");
+
+
+    typedef typename SetAtIndex<index, currentCell, currentRow>::list updatedRow;
+    typedef typename SetAtIndex<C, objToReplace, updatedRow>::list updatedRow2;
+    typedef typename SetAtIndex<R, updatedRow2, gameBoard>::list changedBoard;
+
+    static constexpr bool stepCondition = closeCell::type == currentCell::type;
+    typedef typename Conditional<stepCondition,
+            typename MoveVehicleOneStep <gameBoard, R, C-1, Direction::RIGHT, Type, !stepCondition || B>::board,
+            changedBoard
+    >::value board;
 };
 
+template <typename gameBoard, int R, int C, CellType Type, bool B>
+struct MoveVehicleOneStep <gameBoard, R, C, Direction::LEFT, Type, B>  {
+    typedef typename GetAtIndex<R, gameBoard>::value currentRow;
+    typedef typename GetAtIndex<C, currentRow>::value currentCell;
+    typedef typename GetAtIndex<C-1, currentRow>::value closeCell;
 
-// MoveVehicle Class Declaration
-template<typename gameBoard, int R, int C, Direction D, int A>
-struct MoveVehicle{};
+    static constexpr int vehicleLength = currentCell::length;
+    static constexpr int index = ConditionalInteger<closeCell::type != currentCell::type,
+            vehicleLength + C - 1,
+            C
+    >::value;
 
-// MoveVehicle Specialization
-template<typename B, int R1, int C1, Direction Dl, int A>
-struct MoveVehicle<GameBoard<B>,R1,C1,Dl,A>{
+    static_assert(!(closeCell::type != EMPTY && closeCell::type != currentCell::type && currentCell::type == Type), "movement blocked");
 
-    typedef GameBoard<B> PrevBoard;
-    typedef typename PrevBoard::board mainList;
-    typedef GetAtIndex<R1,mainList> subList;
-    typedef GetAtIndex<C1,typename subList::value> cell;
-    typedef typename cell::value my_cell;
+    typedef typename SetAtIndex<index, closeCell, currentRow>::list updatedRow;
+    typedef typename SetAtIndex<C - 1, currentCell, updatedRow>::list updatedRow2;
+    typedef typename SetAtIndex<R, updatedRow2, gameBoard>::list changedBoard;
 
-    static_assert(R1 >=0 && R1 < mainList::length , "Error Row,Move");
-    static_assert(C1>=0 && C1 < mainList::width, "Error column,Move");
-    static_assert(my_cell::type != EMPTY, "Error,empty cell MoveVehicle");
-    constexpr static Direction carDl = my_cell::direction;
-    static_assert(((Dl == UP || Dl == DOWN) && (carDl == UP || carDl == DOWN)) ||
-                        (((Dl == RIGHT) || (Dl == LEFT)) && ((carDl == RIGHT) || (carDl == LEFT))),
-                            "Error,direction cell MoveVehicle");
+    static constexpr bool stepCondition = closeCell::type == currentCell::type;
+    typedef typename Conditional<stepCondition,
+            typename MoveVehicleOneStep <gameBoard, R, C-1, Direction::LEFT, Type, !stepCondition || B>::board,
+            changedBoard
+    >::value board;
+};
 
-    static constexpr int R2= FindCar<my_cell::type,PrevBoard>::X_row_idx;
-    static constexpr int C2= FindCar<my_cell::type,PrevBoard>::X_col_idx;
-    // the further end:
-    static constexpr int R3= Dir<Dl,R2,C2,my_cell::length>::row_i;
-    static constexpr int C3= Dir<Dl,R2,C2,my_cell::length>::col_i;
+// MoveVehicleOneStep horizontally - base cases
+template <typename gameBoard, int R, CellType Type, bool B>
+struct MoveVehicleOneStep <gameBoard, R, 0, Direction::RIGHT, Type, B>  {
+    typedef typename GetAtIndex<R, gameBoard>::value currentRow;
+    typedef typename GetAtIndex<0, currentRow>::value cell;
+    static constexpr int vehicleLength = cell::length;
 
-    typedef typename direct<Dl,A,B,my_cell,C3,R3>::moved o1;
-    typedef GameBoard<o1> board;
+    static_assert(vehicleLength <= gameBoard::head::size - 1, "exiting bounds");
+    typedef typename GetAtIndex<vehicleLength, currentRow>::value objToReplace;
+    static_assert(!(objToReplace::type != EMPTY && cell::type != EMPTY && !B), "movement blocked");
 
+    typedef typename SetAtIndex<vehicleLength, cell, currentRow>::list updatedRow;
+    typedef typename SetAtIndex<0, objToReplace, updatedRow>::list updatedRow2;
+    typedef typename SetAtIndex<R, updatedRow2, gameBoard>::list board;
+};
+
+template <typename gameBoard, int R, CellType Type, bool B>
+struct MoveVehicleOneStep <gameBoard, R, 1, Direction::LEFT, Type, B>  {
+    typedef typename GetAtIndex<R, gameBoard>::value currentRow;
+    typedef typename GetAtIndex<1, currentRow>::value cell;
+    typedef typename GetAtIndex<0, currentRow>::value closeCell;
+    static constexpr int vehicleLength = cell::length;
+
+    static_assert(closeCell::type == EMPTY || B, "movement blocked");
+
+    typedef typename SetAtIndex<vehicleLength, closeCell, currentRow>::list first_updated_list;
+    typedef typename SetAtIndex<0, cell, first_updated_list>::list updated_list;
+    typedef typename SetAtIndex<R, updated_list, gameBoard>::list board;
 };
 
 #endif //CODE_MOVEVEHICLE_H

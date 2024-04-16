@@ -1,8 +1,8 @@
 #ifndef OOPHW5_BOARDCELL_H
 #define OOPHW5_BOARDCELL_H
 
-#include "Direction.h"
 #include "CellType.h"
+#include "Direction.h"
 
 ///CELL TYPE := EMPTY/RED CAR/ OTHER CARS/TRUCKS
 ///Direction := THE DIRECTION OF THE CAR IS CURRENTLY ON THE CELL -- HORIZONTAL/VERTICAL --

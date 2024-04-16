@@ -19,8 +19,9 @@ public:
 
     void addObserver(Observer<T>& observer) {
         typename vector<Observer<T> *>::iterator it = find(observers.begin(), observers.end(), &observer);
-        if ( it != observers.end())
+        if (it != observers.end())
             throw ObserverAlreadyKnownToSubject();
+
         observers.push_back(&observer);
     }
 
@@ -28,6 +29,7 @@ public:
         typename vector<Observer<T> *>::iterator it = find(observers.begin(), observers.end(), &observer);
         if (it == observers.end())
             throw ObserverUnknownToSubject();
+
         observers.erase(it);
     }
 
